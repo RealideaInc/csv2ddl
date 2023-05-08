@@ -1,0 +1,15 @@
+table_name,column_name,column_type,is_primary_key,is_unique,is_not_null,column_comment,check_constraint,foreign_key_table,foreign_key_column
+users,id,int,TRUE,FALSE,TRUE,User ID,,,
+users,username,varchar(255),FALSE,TRUE,TRUE,Username,,,
+users,email,varchar(255),FALSE,TRUE,TRUE,User email,,,
+users,password,varchar(255),FALSE,FALSE,TRUE,User password,,,
+users,created_at,datetime,FALSE,FALSE,TRUE,Creation timestamp,,,
+users,updated_at,datetime,FALSE,FALSE,TRUE,Update timestamp,,,
+users,age,int,FALSE,FALSE,TRUE,User age,age >= 0,,
+posts,id,int,TRUE,FALSE,TRUE,Post ID,,,
+posts,user_id,int,FALSE,FALSE,TRUE,User ID,,users,id
+posts,title,varchar(255),FALSE,FALSE,TRUE,Post title,,,
+posts,content,text,FALSE,FALSE,FALSE,Post content,,,
+posts,created_at,datetime,FALSE,FALSE,TRUE,Creation timestamp,,,
+posts,updated_at,datetime,FALSE,FALSE,TRUE,Update timestamp,,,
+
