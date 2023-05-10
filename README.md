@@ -36,6 +36,7 @@ table_name,column_name,column_type,is_primary_key,is_unique,is_not_null,foreign_
 
 - -csv: 入力となるCSVファイルのパス
 - -output: 生成されたDDLを保存するファイルのパス。省略した場合は、入力CSVファイルと同じ名前になります。
+- -dir: ディレクトリパスを指定し、そのディレクトリ内にある全CSVに対してcsv2ddlを実行します。出力されるDDLファイル名はCSVと同名になります。(-dirオプションをつけた場合-csvオプションは不要)
 
 例:
 
@@ -44,3 +45,9 @@ table_name,column_name,column_type,is_primary_key,is_unique,is_not_null,foreign_
 ```
 
 これにより、input.csvファイルを読み込み、output.sqlファイルにMySQLのDDLが生成されます。
+
+```bash
+./csv-to-mysql-ddl -dir ./csv/
+```
+
+これにより、csvディレクトリ以下の全CSVファイルからDDLファイルを生成します。
