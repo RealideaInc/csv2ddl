@@ -46,10 +46,10 @@ func ParseCSV(filePath string) ([]Table, error) {
 			IsPrimaryKey:     ParseBool(record[3]),
 			IsUnique:         ParseBool(record[4]),
 			IsNotNull:        ParseBool(record[5]),
-			Comment:          record[6],
-			Check:            record[7],
-			ForeignKeyTable:  record[8],
-			ForeignKeyColumn: record[9],
+			ForeignKeyTable:  record[6],
+			ForeignKeyColumn: record[7],
+			Check:            record[8],
+			Comment:          record[9],
 		}
 
 		table.Columns = append(table.Columns, column)

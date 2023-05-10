@@ -26,6 +26,7 @@ func generateTableDDL(table *Table) (string, error) {
 
 	columnDDLs := []string{}
 	primaryKeys := []string{}
+	foreignKeys := []string{}
 	for _, column := range table.Columns {
 		columnDDL, err := generateColumnDDL(&column)
 		if err != nil {
@@ -36,6 +37,10 @@ func generateTableDDL(table *Table) (string, error) {
 		if column.IsPrimaryKey {
 			primaryKeys = append(primaryKeys, column.Name)
 		}
+		if column.ForeignKeyTable != "" && column.ForeignKeyColumn != "" {
+			fkr := fmt.Sprintf("FOREIGN KEY (%s) REFERENCES %s(%s)", column.Name, column.ForeignKeyTable, column.ForeignKeyColumn)
+			foreignKeys = append(foreignKeys, fkr)
+		}
 	}
 
 	ddl := fmt.Sprintf("CREATE TABLE %s (\n", table.Name)
@@ -43,6 +48,11 @@ func generateTableDDL(table *Table) (string, error) {
 
 	if len(primaryKeys) > 0 {
 		ddl += fmt.Sprintf(",\nPRIMARY KEY (%s)", strings.Join(primaryKeys, ", "))
+	}
+
+	if len(foreignKeys) > 0 {
+		ddl += ",\n"
+		ddl += strings.Join(foreignKeys, ",\n")
 	}
 
 	ddl += "\n);"
@@ -63,10 +73,6 @@ func generateColumnDDL(column *Column) (string, error) {
 
 	if column.Check != "" {
 		ddl += fmt.Sprintf(" CHECK (%s)", column.Check)
-	}
-
-	if column.ForeignKeyTable != "" && column.ForeignKeyColumn != "" {
-		ddl += fmt.Sprintf(" FOREIGN KEY REFERENCES %s(%s)", column.ForeignKeyTable, column.ForeignKeyColumn)
 	}
 
 	if column.Comment != "" {

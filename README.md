@@ -13,19 +13,19 @@
 CSVファイルのフォーマットは以下の通りです。
 
 ```csv
-table_name,column_name,type,is_primary_key,is_not_null,is_unique,foreign_key_table,foreign_key_column,check,comment
+table_name,column_name,column_type,is_primary_key,is_unique,is_not_null,foreign_key_table,foreign_key_column,check_constraint,column_comment
 ```
 
 - `table_name`: テーブル名
 - `column_name`: カラム名
-- `type`: カラムのデータ型
+- `column_type`: カラムのデータ型
 - `is_primary_key`: 主キーである場合は**TRUE**、そうでない場合は**FALSE**
-- `is_not_null`: NOT NULL制約がある場合は**TRUE**、そうでない場合は**FALSE**
 - `is_unique`: UNIQUE制約がある場合は**TRUE**、そうでない場合は**FALSE**
+- `is_not_null`: NOT NULL制約がある場合は**TRUE**、そうでない場合は**FALSE**
 - `foreign_key_table`: 外部キー制約がある場合、参照先のテーブル名
 - `foreign_key_column`: 外部キー制約がある場合、参照先のカラム名
-- `check`: CHECK制約の条件式
-- `comment`: カラムの説明（コメント
+- `check_constraint`: CHECK制約の条件式
+- `column_comment`: カラムの説明（コメント
 
 ## 実行方法
 ビルド済みのバイナリを実行するには、以下のコマンドを使用します。

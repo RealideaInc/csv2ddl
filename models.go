@@ -11,8 +11,8 @@ type Column struct {
 	IsPrimaryKey     bool
 	IsUnique         bool
 	IsNotNull        bool
-	Comment          string
-	Check            string
 	ForeignKeyTable  string
 	ForeignKeyColumn string
+	Check            string
+	Comment          string
 }
