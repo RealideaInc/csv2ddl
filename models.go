@@ -9,8 +9,8 @@ type Column struct {
 	Name             string
 	Type             string
 	IsPrimaryKey     bool
-	IsUnique         bool
 	IsNotNull        bool
+	IsUnique         bool
 	ForeignKeyTable  string
 	ForeignKeyColumn string
 	Check            string
