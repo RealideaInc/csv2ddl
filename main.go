@@ -3,67 +3,79 @@ package main
 import (
 	"flag"
 	"fmt"
-	"io/ioutil"
-	"os"
 	"path/filepath"
-	"strings"
 )
 
 func main() {
-	csvPath := flag.String("csv", "", "CSVファイル名")
-	ddlPath := flag.String("output", "", "DDLファイル名")
-	dirName := flag.String("dir", "", "複数のCSVファイルが格納されているディレクトリパス")
+	csvFile := flag.String("csv", "", "CSVファイルへのパス.")
+	outputName := flag.String("output", "", "DDLの出力ファイル名。指定しない場合、CSVファイルの名前が使用されます。")
+	dir := flag.String("dir", "", "CSVファイルが含まれるディレクトリのパス.")
+	singleFile := flag.Bool("single", false, "-dirフラグと共に使用。全てのDDLを一つのファイルにまとめます。")
 	flag.Parse()
 
-	if *csvPath != "" && *dirName != "" {
-		fmt.Println("Error: CSVファイル名、またはディレクトリパスが指定されていません。")
-		os.Exit(1)
+	if *csvFile != "" && *dir != "" {
+		fmt.Println("フラグは-csvか-dirのどちらか一つだけを指定してください。")
+		return
 	}
 
-	if *csvPath != "" {
-		if *ddlPath == "" {
-			*ddlPath = strings.TrimSuffix(*csvPath, filepath.Ext(*csvPath)) + ".sql"
-		}
-		processFile(*csvPath, *ddlPath)
-	} else if *dirName != "" {
-		files, err := ioutil.ReadDir(*dirName)
+	if *csvFile == "" && *dir == "" {
+		fmt.Println("フラグ-csvか-dirのどちらか一つを指定してください。")
+		return
+	}
+
+	if *singleFile && *dir == "" {
+		fmt.Println("フラグ-singleは-dirフラグと共に使用してください。")
+		return
+	}
+
+	if *csvFile != "" {
+		ddl, err := ProcessCSVFile(*csvFile)
 		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
+			fmt.Println("エラー：", err)
+		}
+		if err := WriteToFile(*outputName+".sql", ddl); err != nil {
+			fmt.Println("エラー：", err)
+		}
+		return
+	}
+
+	if *dir != "" {
+		csvFiles, err := GetFilesFromDirectory(*dir, ".csv")
+		if err != nil {
+			fmt.Println("エラー：", err)
+			return
 		}
 
-		for _, f := range files {
-			if filepath.Ext(f.Name()) == ".csv" {
-				csvFile := filepath.Join(*dirName, f.Name())
-				outputFile := strings.TrimSuffix(csvFile, filepath.Ext(csvFile)) + ".sql"
-				if !processFile(csvFile, outputFile) {
-					fmt.Println("未対応のCSVファイル: ", csvFile)
+		var allDDLs string
+		for _, file := range csvFiles {
+			filename := filepath.Base(file)
+			filename = filename[:len(filename)-len(filepath.Ext(filename))]
+			if *singleFile {
+				ddl, err := ProcessCSVFile(file)
+				if err != nil {
+					fmt.Printf("ファイルの処理エラー：%s。 エラー：%s\n", file, err)
+					continue
+				}
+				allDDLs += ddl + "\n"
+			} else {
+				ddl, err := ProcessCSVFile(file)
+				if err != nil {
+					fmt.Printf("ファイルの処理エラー：%s。 エラー：%s\n", file, err)
+				}
+				if err := WriteToFile(filename+".sql", ddl); err != nil {
+					fmt.Println("エラー：", err)
 				}
 			}
 		}
-	} else {
-		fmt.Println("Error: CSVファイル名、またはディレクトリパスが指定されていません。")
-		os.Exit(1)
-	}
-}
 
-func processFile(csvPath string, ddlPath string) bool {
-	tables, err := ParseCSV(csvPath)
-	if err != nil {
-		fmt.Println(err)
-		return false
+		if *singleFile {
+			outputFileName := "output.sql"
+			if *outputName != "" {
+				outputFileName = *outputName + ".sql"
+			}
+			if err := WriteToFile(outputFileName, allDDLs); err != nil {
+				fmt.Println("エラー：", err)
+			}
+		}
 	}
-
-	ddl, err := GenerateDDL(tables)
-	if err != nil {
-		fmt.Println(err)
-		return false
-	}
-
-	if err := WriteToFile(ddlPath, ddl); err != nil {
-		fmt.Println(err)
-		return false
-	}
-
-	return true
 }

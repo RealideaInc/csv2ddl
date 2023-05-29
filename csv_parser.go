@@ -2,42 +2,40 @@ package main
 
 import (
 	"encoding/csv"
-	"errors"
+	"fmt"
 	"os"
 )
 
 func ParseCSV(filePath string) ([]Table, error) {
 	file, err := os.Open(filePath)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ファイルを開けません: %v", err)
 	}
 	defer file.Close()
 
 	reader := csv.NewReader(file)
-	records, err := reader.ReadAll()
+	reader.Comma = ','
+	reader.LazyQuotes = true
+
+	rawCsvData, err := reader.ReadAll()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("CSVを読み込み中にエラーが発生しました: %v", err)
 	}
 
-	if len(records) < 1 {
-		return nil, errors.New("空のCSVファイルです")
+	if len(rawCsvData) < 2 {
+		return nil, fmt.Errorf("CSVファイルには最低でも2行が必要です")
 	}
 
+	return ParseCSVData(rawCsvData), nil
+}
+
+func ParseCSVData(rawCsvData [][]string) []Table {
 	tables := make(map[string]*Table)
-	for i, record := range records {
-		if i == 0 {
-			continue
-		}
 
-		if len(record) < 10 {
-			return nil, errors.New("不正なCSVファイルです。カラムが足りません。")
-		}
-
+	for _, record := range rawCsvData[1:] {
 		tableName := record[0]
-		table, exists := tables[tableName]
-		if !exists {
-			table = &Table{Name: tableName}
-			tables[tableName] = table
+		if _, ok := tables[tableName]; !ok {
+			tables[tableName] = &Table{Name: tableName, Columns: []Column{}}
 		}
 
 		column := Column{
@@ -52,13 +50,12 @@ func ParseCSV(filePath string) ([]Table, error) {
 			Comment:          record[9],
 		}
 
-		table.Columns = append(table.Columns, column)
+		tables[tableName].Columns = append(tables[tableName].Columns, column)
 	}
 
-	tableSlice := make([]Table, 0, len(tables))
+	var tableList []Table
 	for _, table := range tables {
-		tableSlice = append(tableSlice, *table)
+		tableList = append(tableList, *table)
 	}
-
-	return tableSlice, nil
+	return tableList
 }

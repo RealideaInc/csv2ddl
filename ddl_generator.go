@@ -6,78 +6,58 @@ import (
 )
 
 func GenerateDDL(tables []Table) (string, error) {
-	ddl := []string{}
+	var ddl strings.Builder
 
 	for _, table := range tables {
-		tableDDL, err := generateTableDDL(&table)
-		if err != nil {
-			return "", err
+		ddl.WriteString(fmt.Sprintf("CREATE TABLE %s (\n", table.Name))
+
+		var columnDeclarations []string
+		var primaryKeyColumns []string
+		for _, column := range table.Columns {
+			columnDeclaration := fmt.Sprintf("  %s %s", column.Name, column.Type)
+
+			if column.IsPrimaryKey {
+				primaryKeyColumns = append(primaryKeyColumns, column.Name)
+			}
+
+			if column.IsNotNull {
+				columnDeclaration += " NOT NULL"
+			}
+
+			if column.IsUnique {
+				columnDeclaration += " UNIQUE"
+			}
+
+			if column.Check != "" {
+				columnDeclaration += fmt.Sprintf(" CHECK(%s)", column.Check)
+			}
+
+			if column.Comment != "" {
+				columnDeclaration += fmt.Sprintf(" COMMENT '%s'", column.Comment)
+			}
+
+			columnDeclarations = append(columnDeclarations, columnDeclaration)
 		}
-		ddl = append(ddl, tableDDL)
-	}
 
-	return strings.Join(ddl, "\n\n"), nil
-}
-
-func generateTableDDL(table *Table) (string, error) {
-	if len(table.Columns) == 0 {
-		return "", fmt.Errorf("テーブル %s にカラムがありません。", table.Name)
-	}
-
-	columnDDLs := []string{}
-	primaryKeys := []string{}
-	foreignKeys := []string{}
-	for _, column := range table.Columns {
-		columnDDL, err := generateColumnDDL(&column)
-		if err != nil {
-			return "", err
+		if len(primaryKeyColumns) > 0 {
+			primaryKeyDeclaration := fmt.Sprintf("PRIMARY KEY (%s)", strings.Join(primaryKeyColumns, ", "))
+			columnDeclarations = append(columnDeclarations, primaryKeyDeclaration)
 		}
-		columnDDLs = append(columnDDLs, columnDDL)
 
-		if column.IsPrimaryKey {
-			primaryKeys = append(primaryKeys, column.Name)
+		for _, column := range table.Columns {
+			if column.ForeignKeyTable != "" && column.ForeignKeyColumn != "" {
+				foreignKeyDeclaration := fmt.Sprintf("FOREIGN KEY (%s) REFERENCES %s(%s)", column.Name, column.ForeignKeyTable, column.ForeignKeyColumn)
+				columnDeclarations = append(columnDeclarations, foreignKeyDeclaration)
+			}
 		}
-		if column.ForeignKeyTable != "" && column.ForeignKeyColumn != "" {
-			fkr := fmt.Sprintf("FOREIGN KEY (%s) REFERENCES %s(%s)", column.Name, column.ForeignKeyTable, column.ForeignKeyColumn)
-			foreignKeys = append(foreignKeys, fkr)
-		}
+
+		ddl.WriteString(strings.Join(columnDeclarations, ",\n"))
+		ddl.WriteString("\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;\n")
 	}
 
-	ddl := fmt.Sprintf("CREATE TABLE %s (\n", table.Name)
-	ddl += strings.Join(columnDDLs, ",\n")
-
-	if len(primaryKeys) > 0 {
-		ddl += fmt.Sprintf(",\nPRIMARY KEY (%s)", strings.Join(primaryKeys, ", "))
+	if ddl.Len() == 0 {
+		return "", fmt.Errorf("生成されたDDLが空です")
 	}
 
-	if len(foreignKeys) > 0 {
-		ddl += ",\n"
-		ddl += strings.Join(foreignKeys, ",\n")
-	}
-
-	ddl += "\n);"
-
-	return ddl, nil
-}
-
-func generateColumnDDL(column *Column) (string, error) {
-	ddl := fmt.Sprintf("  %s %s", column.Name, column.Type)
-
-	if column.IsNotNull {
-		ddl += " NOT NULL"
-	}
-
-	if column.IsUnique {
-		ddl += " UNIQUE"
-	}
-
-	if column.Check != "" {
-		ddl += fmt.Sprintf(" CHECK (%s)", column.Check)
-	}
-
-	if column.Comment != "" {
-		ddl += fmt.Sprintf(" COMMENT '%s'", column.Comment)
-	}
-
-	return ddl, nil
+	return ddl.String(), nil
 }

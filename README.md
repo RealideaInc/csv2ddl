@@ -31,23 +31,24 @@ table_name,column_name,column_type,is_primary_key,is_unique,is_not_null,foreign_
 ビルド済みのバイナリを実行するには、以下のコマンドを使用します。
 
 ```bash
-./csv-to-mysql-ddl -csv <input_csv_file> -output <output_ddl_file>
+./csv2ddl -csv <input_csv_file> -output <output_ddl_file> -dir <dirctory_path> -single
 ```
 
 - -csv: 入力となるCSVファイルのパス
 - -output: 生成されたDDLを保存するファイルのパス。省略した場合は、入力CSVファイルと同じ名前になります。
 - -dir: ディレクトリパスを指定し、そのディレクトリ内にある全CSVに対してcsv2ddlを実行します。出力されるDDLファイル名はCSVと同名になります。(-dirオプションをつけた場合-csvオプションは不要)
+- -single: -dirと同時に使用。つけると1つのDDLファイルに出力します。
 
 例:
 
 ```bash
-./csv-to-mysql-ddl -csv input.csv -output output.sql
+./csv2ddl -csv input.csv -output output.sql
 ```
 
 これにより、input.csvファイルを読み込み、output.sqlファイルにMySQLのDDLが生成されます。
 
 ```bash
-./csv-to-mysql-ddl -dir ./csv/
+./csv2ddl -dir ./csv/
 ```
 
 これにより、csvディレクトリ以下の全CSVファイルからDDLファイルを生成します。
